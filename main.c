@@ -1,21 +1,48 @@
 #include <stdio.h>
+#include <string.h>
 #include <dirent.h>
 #include <sys/stat.h>
+#include <errno.h>
 
-int main() {
-    DIR *dir = opendir(".");
-    struct dirent *entry = readdir(dir);
-    struct stat info;
+int main(int argc, char **argv) {
+    char cdir[100];
+    char path[100];
     int size = 0;
+    struct dirent *entry;
+    struct stat info;
+
+    if(argc > 1) {
+        strncpy(cdir, argv[1], sizeof(cdir) - 1);
+    } else {
+        printf("Input directory to search: ");
+        fgets(cdir, sizeof(cdir), stdin);
+    }
+
+    char *nl = strrchr(cdir, '\n');
+
+    if(nl) {
+        *nl = '\0';
+    }
+
+    DIR *dir = opendir(cdir);
+
+    if(dir == NULL) {
+        printf("%s as %s\n", strerror(errno), cdir);
+        return 0;
+    }
+
+    entry = readdir(dir);
     
-    printf("Statistics for directory: %s\n", entry -> d_name);
+    printf("Statistics for directory: %s\n", cdir);
 
     while(entry) {
         if(entry->d_type == DT_REG) {
-            stat(entry->d_name, &info);
+            strcpy(path, cdir);
+            strcat(path, "/");
+            strcat(path, entry->d_name);
+            stat(path, &info);
             size += info.st_size;
         }
-
         entry = readdir(dir);
     }
 
